@@ -8,6 +8,7 @@ public class PlayerController : MonoBehaviour
 	private Rigidbody2D rb;
 	private Animator animator;
 	private Vector2 inputDirection;
+	private float lastLookDir = 0.0f;
 	private SpriteRenderer spriteRenderer;
 	public float jumpForce = 2.0f;
 
@@ -26,10 +27,15 @@ public class PlayerController : MonoBehaviour
 	private bool jumpExecutePending = false;
 
 	private int coinAmountInMap;
+	private float health = 3.0f;
+	private float lastDamageTime = 0.0f;
+	public float damageInterval = 1.0f;
 
+	private Vector3 lastCheckPointPos;
 
 	// UI Connection
 	Text coinText;
+	HeartUI[] hearts;
 	
 
 	/*  Controlling the character
@@ -49,34 +55,43 @@ public class PlayerController : MonoBehaviour
 	void Start()
 	{
 		rb = GetComponent<Rigidbody2D>();
-		animator = GetComponent<Animator>();
-		spriteRenderer = GetComponent<SpriteRenderer>();
+		animator = GetComponentInChildren<Animator>();
+		spriteRenderer = GetComponentInChildren<SpriteRenderer>();
 		GameObject coinUI = null;
 		coinUI = GameObject.FindGameObjectWithTag("UI");
 		coinText = coinUI.GetComponent<Text>();
+		hearts = new HeartUI[3];
+		for (int i = 1; i <= 3; i++) {
+			string uiName = "HeartUI" + i.ToString ();
+			GameObject heart = GameObject.Find(uiName);
+			Debug.Assert (heart, "No heart ui found: " + uiName);
+			hearts [i - 1] = heart.GetComponent<HeartUI> ();
+
+		}
 
 		// Find all coins
 		GameObject[] coins = GameObject.FindGameObjectsWithTag("Coin");
 		coinAmountInMap = coins.Length;
+
+		lastCheckPointPos = transform.position;
 	}
 
 	// Update is called once per frame
 	void Update()
 	{
-		if (coinText == null)
-		{
 
-		}
-		if (Input.GetKey(KeyCode.Space))
+		inputDirection = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
+		if (Input.GetKey(KeyCode.Space) ||  inputDirection.y > 0.1f)
 		{
 			jumpPressedTime = Time.time;
 			jumpRequestPending = true;
 		}
 
-		inputDirection = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
 		animator.SetBool("HorizontalInput", inputDirection != Vector2.zero);
-		float dir = Mathf.Sign(inputDirection.x);
-		spriteRenderer.flipX = (dir != 0 && dir > 0.0);
+		if (inputDirection != Vector2.zero) {
+			lastLookDir = Mathf.Sign (inputDirection.x);
+		}
+		spriteRenderer.flipX = (lastLookDir != 0 && lastLookDir > 0.0);
 	}
 
 	void FixedUpdate()
@@ -142,6 +157,29 @@ public class PlayerController : MonoBehaviour
 		}
 		jumpRequestPending = false;
 	}
+	private void UpdateHealth()
+	{
+		float healthLeft = health;
+		for (int i = 0; i < hearts.Length; i++) {
+			hearts [i].SetHealth (healthLeft);
+			healthLeft -= 1.0f;
+		}
+	}
+	private void TakeDamage(float amount) {
+		float sinceLast = Time.time - lastDamageTime;
+		if (sinceLast > damageInterval) {
+			health -= amount;
+
+			lastDamageTime = Time.time;
+
+			// Is dead?
+			if (health <= 0.0f) {
+				rb.MovePosition (lastCheckPointPos);
+				health = 3.0f;
+			}
+			UpdateHealth ();
+		}
+	}
 
 	private void OnGroundContact()
 	{
@@ -151,32 +189,35 @@ public class PlayerController : MonoBehaviour
 	// Notice when feet touch ground
 	void OnTriggerStay2D(Collider2D other)
 	{
-		if (other.tag == "Ground")
+		if (other.tag == "Ground" || other.tag == "Enemy")
 		{
 			OnGroundContact();
 		}
 	}
 	void OnTriggerEnter2D(Collider2D other)
 	{
-		if (other.tag == "Ground")
-		{
-			OnGroundContact();
-			if (jumpExecutePending)
-			{
+		if (other.tag == "Ground") {
+			OnGroundContact ();
+			if (jumpExecutePending) {
 
-				TryDoJump();
+				TryDoJump ();
 			}
-		}
-		else if (other.tag == "Coin")
-		{
-			GameObject.Destroy(other.gameObject);
+		} else if (other.tag == "Coin") {
+			GameObject.Destroy (other.gameObject);
 			coinsCollected += 1;
-			coinText.text = "Coins: " + System.Convert.ToString(coinsCollected);
+			coinText.text = "Coins: " + System.Convert.ToString (coinsCollected);
+		} else if (other.tag == "Enemy") {
+			TakeDamage (0.5f);
+			OnGroundContact ();
+		} else if (other.tag == "Checkpoint") {
+			lastCheckPointPos = transform.position;
+		} else if (other.tag == "MainCamera") {
+			TakeDamage(health);
 		}
 	}
 	void OnTriggerExit2D(Collider2D other)
 	{
-		if (other.tag == "Ground")
+		if (other.tag == "Ground" || other.tag == "Enemy")
 		{
 			isGrounded = false;
 		}

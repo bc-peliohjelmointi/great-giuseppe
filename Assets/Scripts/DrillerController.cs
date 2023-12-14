@@ -38,7 +38,7 @@ public class DrillerController : MonoBehaviour {
 	{
 		if (other.tag == "Player")
 		{
-			Debug.Log("Driller player enter");
+			
 			animator.SetTrigger("Player Near");
 			locked = true;
 		}
@@ -48,7 +48,7 @@ public class DrillerController : MonoBehaviour {
 	{
 		if (other.tag == "Player")
 		{
-			Debug.Log("Driller player exit");
+			
 			animator.SetTrigger("Player Left");
 			locked = false;
 		}
