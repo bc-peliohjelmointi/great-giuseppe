@@ -21,7 +21,7 @@ public class HeartUI : MonoBehaviour {
 	/// <param name="amount">0-1.0</param>
 	public void SetHealth(float amount)
 	{
-		if (amount == 0.0) {
+		if (amount <= 0.0) {
 			imageUI.sprite = emptyHeart;
 		} else if (amount == 0.5f) {
 			imageUI.sprite = halfHeart;

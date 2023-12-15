@@ -8,6 +8,8 @@ public class DrillerController : MonoBehaviour {
 	Animator animator;
 	SpriteRenderer spriteRenderer;
 	Rigidbody2D rb;
+	AudioSource output;
+	public AudioClip lockUpSound;
 	public float speed = 1.0f;
 
 	private Vector2 direction;
@@ -17,6 +19,7 @@ public class DrillerController : MonoBehaviour {
 		animator = GetComponent<Animator>();
 		spriteRenderer = GetComponent<SpriteRenderer>();
 		rb = GetComponent<Rigidbody2D>();
+		output = GetComponent<AudioSource> ();
 		direction = new Vector2(-1, 0.0f);
 	}
 
@@ -41,6 +44,7 @@ public class DrillerController : MonoBehaviour {
 			
 			animator.SetTrigger("Player Near");
 			locked = true;
+			output.PlayOneShot (lockUpSound);
 		}
 	}
 
