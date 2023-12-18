@@ -9,6 +9,7 @@ public class DrillerController : MonoBehaviour {
 	SpriteRenderer spriteRenderer;
 	Rigidbody2D rb;
 	AudioSource output;
+
 	public AudioClip lockUpSound;
 	public float speed = 1.0f;
 
@@ -39,10 +40,8 @@ public class DrillerController : MonoBehaviour {
 
 	public void OnTriggerEnter2D(Collider2D other)
 	{
-		if (other.tag == "Player")
-		{
-			
-			animator.SetTrigger("Player Near");
+		if (other.tag == "Player") {
+			animator.SetTrigger ("Player Near");
 			locked = true;
 			output.PlayOneShot (lockUpSound);
 		}
@@ -52,15 +51,19 @@ public class DrillerController : MonoBehaviour {
 	{
 		if (other.tag == "Player")
 		{
-			
 			animator.SetTrigger("Player Left");
 			locked = false;
 		}
 	}
-	public void OnGroundTriggerExit()
-	{
+	private void TurnAround() {
 		// Turn around
 		direction = new Vector3(direction.x * -1.0f, 0.0f, 0.0f);
 		spriteRenderer.flipX = Mathf.Sign(direction.x) > 0;
+
+	}
+
+	public void OnGroundTriggerExit()
+	{
+		TurnAround ();
 	}
 }

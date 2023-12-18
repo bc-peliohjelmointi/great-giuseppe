@@ -324,6 +324,7 @@ public class PlayerController : MonoBehaviour
 			TakeDamage (0.5f);
 		} else if (other.tag == "Checkpoint") {
 			lastCheckPointPos = transform.position;
+			other.GetComponentInParent<Checkpoint> ().Activate ();
 		} else if (other.tag == "MainCamera") {
 			TakeDamage(health);
 		}
